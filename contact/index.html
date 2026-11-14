@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Contact Us — Calcvora</title>
+  <meta name="description" content="Get in touch with the Calcvora team for technical feedback, bug reports, or partnership inquiries." />
+  <link rel="canonical" href="https://utilitynest123.github.io/calcvora/contact/" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%232563eb'/><text x='50' y='68' font-size='56' font-family='Arial' font-weight='bold' fill='white' text-anchor='middle'>C</text></svg>" />
+  <link rel="stylesheet" href="../assets/css/style.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="container nav-wrapper">
+      <a href="../" class="brand-logo">Calcvora <span class="brand-badge">PRO</span></a>
+      <ul class="nav-links" id="nav-links">
+        <li><a href="../">Home</a></li>
+        <li><a href="../ai-vram-calculator/">AI VRAM & API</a></li>
+        <li><a href="../solar-battery-sizing/">Solar & Battery</a></li>
+        <li><a href="../freelance-net-income/">Freelance & PPP</a></li>
+        <li><a href="../about/">About</a></li>
+      </ul>
+      <div class="nav-actions">
+        <button class="icon-btn" id="theme-toggle">🌙</button>
+        <button class="icon-btn mobile-toggle" id="mobile-menu-btn">☰</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <article class="guide-article">
+      <h1>Contact Calcvora</h1>
+      <p>We welcome bug reports, formula verification notes, and suggestions for new engineering or financial calculators.</p>
+
+      <div class="metric-box" style="margin: 1.5rem 0;">
+        <div class="metric-label">Direct Email Support</div>
+        <div class="metric-value" style="font-size: 1.15rem;"><a href="mailto:utilitynest123@gmail.com">utilitynest123@gmail.com</a></div>
+        <div class="metric-sub">Maintained by Md Jobair • Typical response time: 24–48 hours</div>
+      </div>
+
+      <h2>Quick Message Composer</h2>
+      <form id="contact-form" onsubmit="event.preventDefault(); const s=encodeURIComponent(document.getElementById('c-sub').value); const b=encodeURIComponent('Name: '+document.getElementById('c-name').value+'\n\n'+document.getElementById('c-msg').value); window.location.href='mailto:utilitynest123@gmail.com?subject='+s+'&body='+b;">
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="c-name">Your Name</label>
+            <input type="text" id="c-name" required placeholder="Alex Morgan" />
+          </div>
+          <div class="form-group">
+            <label for="c-sub">Subject</label>
+            <input type="text" id="c-sub" required placeholder="Calculator Feedback / Inquiry" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="c-msg">Message</label>
+          <textarea id="c-msg" rows="5" required placeholder="Describe your feedback or question..."></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">Open in Email Client →</button>
+      </form>
+    </article>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-bottom">
+      <span>© 2026 Calcvora. All rights reserved.</span>
+      <span><a href="../privacy-policy/">Privacy Policy</a> • <a href="../disclaimer/">Disclaimer</a></span>
+    </div>
+  </footer>
+  <script src="../assets/js/main.js"></script>
+</body>
+</html>
