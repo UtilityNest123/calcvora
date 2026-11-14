@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Off-Grid & Hybrid Solar + Battery Bank ROI Calculator — Calcvora</title>
+  <meta name="description" content="Size your off-grid or hybrid solar PV array, LiFePO4 or Lead-Acid battery bank, MPPT charge controller, inverter surge capacity, and simulate 10-year electricity payback ROI." />
+  <link rel="canonical" href="https://utilitynest123.github.io/calcvora/solar-battery-sizing/" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%232563eb'/><text x='50' y='68' font-size='56' font-family='Arial' font-weight='bold' fill='white' text-anchor='middle'>C</text></svg>" />
+  <link rel="stylesheet" href="../assets/css/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js" defer></script>
+  <script src="../assets/js/main.js" defer></script>
+  <script src="./app.js" defer></script>
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "SoftwareApplication",
+        "name": "Calcvora Solar & Battery Bank Sizing Simulator",
+        "applicationCategory": "UtilitiesApplication",
+        "operatingSystem": "Web Browser",
+        "url": "https://utilitynest123.github.io/calcvora/solar-battery-sizing/",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        },
+        "description": "Engineering-grade solar PV array, battery storage (LiFePO4 & Lead-Acid), MPPT controller, inverter sizing, and 10-year financial payback calculator."
+      },
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://utilitynest123.github.io/calcvora/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Solar & Battery Sizing Simulator",
+            "item": "https://utilitynest123.github.io/calcvora/solar-battery-sizing/"
+          }
+        ]
+      },
+      {
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "How many solar panels and batteries do I need to run a 1.5 ton inverter AC?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "A 1.5-ton inverter air conditioner averages roughly 1,200W to 1,500W once the room reaches target temperature. Running it for 8 hours daily consumes ~11.2 kWh. With 5 Peak Sun Hours and 0.77 system derating, you need roughly 3,000W to 3,200W of solar panels (six 550W panels) and a 15 kWh (48V 300Ah) LiFePO4 battery bank for overnight backup."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Why is LiFePO4 battery capacity sized smaller than Lead-Acid for the same backup?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Lithium Iron Phosphate (LiFePO4) batteries safely support an 80% to 90% Depth of Discharge (DoD) and ~95% round-trip efficiency. Tubular or AGM Lead-Acid batteries degrade rapidly if discharged below 50% DoD and lose ~18% of energy as heat during charging, requiring nearly 1.8x more nameplate Amp-hours for identical usable energy."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Should I choose a 12V, 24V, or 48V battery bank?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Use 12V for small loads under 1,500W (vans, cabins), 24V for medium loads up to 3,500W, and 48V for whole-home or air-conditioning loads above 3,500W. Higher DC voltage cuts current (Amps) by up to 4x, reducing copper cable thickness, resistive heat losses, and MPPT controller costs."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "What is the solar derating factor (0.77) in sizing equations?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "A 550W solar panel rarely outputs 550W in real-world conditions due to high cell temperature losses (~10%), dust and soiling (~5%), DC/AC wiring voltage drop (~3%), and module mismatch. Multiplying Peak Sun Hours by a 0.77 derating factor ensures your array meets daily energy demand year-round."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "How is MPPT solar charge controller amperage calculated?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Divide the total solar array wattage by the nominal battery bank voltage, then multiply by a 1.25 NEC safety factor to account for cold-weather cloud-edge irradiance spikes. For example, a 3,300W array on a 48V bank requires (3300 / 48) × 1.25 = 85.9A, meaning a 90A or 100A MPPT controller is required."
+            }
+          }
+        ]
+      }
+    ]
+  }
+  </script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="container nav-wrapper">
+      <a href="../" class="brand-logo">Calcvora <span class="brand-badge">PRO</span></a>
+      <ul class="nav-links" id="nav-links">
+        <li><a href="../">Home</a></li>
+        <li><a href="../ai-vram-calculator/">AI VRAM & API</a></li>
+        <li><a href="./" class="active">Solar & Battery</a></li>
+        <li><a href="../freelance-net-income/">Freelance & PPP</a></li>
+        <li><a href="../about/">About</a></li>
+      </ul>
+      <div class="nav-actions">
+        <button class="icon-btn" id="theme-toggle" title="Toggle theme">🌙</button>
+        <button class="icon-btn mobile-toggle" id="mobile-menu-btn" aria-label="Menu">☰</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+      <a href="../">Home</a> <span>/</span> <span>Solar & Battery Sizing Simulator</span>
+    </nav>
+
+    <div class="tool-header">
+      <h1>Off-Grid & Hybrid Solar + Battery Bank ROI Simulator</h1>
+      <p>Build a custom appliance load profile to calculate exact solar PV array wattage, battery Amp-hours, MPPT amperage, inverter surge rating, and 10-year financial payback.</p>
+    </div>
+
+    <div class="ad-slot ad-leaderboard" data-ad-format="auto"></div>
+
+    <section class="card">
+      <div class="workbench-grid">
+        <!-- LEFT COLUMN: APPLIANCES & ENGINEERING PARAMS -->
+        <div>
+          <div class="form-group">
+            <label>1-Click Quick Add Appliances</label>
+            <div class="preset-row" id="appliance-presets">
+              <button type="button" class="preset-chip" data-name="1.5 Ton Inverter AC" data-watts="1400" data-hours="6">+ 1.5T Inverter AC (1400W)</button>
+              <button type="button" class="preset-chip" data-name="Inverter Refrigerator" data-watts="150" data-hours="14">+ Fridge (150W)</button>
+              <button type="button" class="preset-chip" data-name="Ceiling Fan" data-watts="75" data-hours="12">+ Ceiling Fan (75W)</button>
+              <button type="button" class="preset-chip" data-name="LED Lights" data-watts="15" data-hours="8">+ LED Bulb (15W)</button>
+              <button type="button" class="preset-chip" data-name="Workstation PC / WiFi" data-watts="250" data-hours="8">+ PC & Router (250W)</button>
+              <button type="button" class="preset-chip" data-name="Water Pump (1 HP)" data-watts="750" data-hours="1">+ Water Pump (750W)</button>
+            </div>
+          </div>
+
+          <div class="table-wrap">
+            <table id="load-table">
+              <thead>
+                <tr>
+                  <th>Appliance</th>
+                  <th style="width: 85px;">Watts</th>
+                  <th style="width: 65px;">Qty</th>
+                  <th style="width: 75px;">Hrs/Day</th>
+                  <th style="width: 45px;"></th>
+                </tr>
+              </thead>
+              <tbody id="load-tbody"></tbody>
+            </table>
+          </div>
+          <button type="button" class="btn btn-outline btn-sm" id="add-custom-row" style="margin-bottom: 1.25rem;">+ Add Custom Appliance Row</button>
+
+          <h3 style="font-size: 1.05rem; margin-bottom: 0.75rem; border-top: 1px solid var(--border-color); padding-top: 1rem;">System Engineering Parameters</h3>
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="sol-psh">Peak Sun Hours (PSH/day)</label>
+              <input type="number" id="sol-psh" min="1.5" max="9" step="0.1" value="5.0" />
+            </div>
+            <div class="form-group">
+              <label for="sol-voltage">DC System Voltage</label>
+              <select id="sol-voltage">
+                <option value="12">12V DC (Small Systems &lt;1.5kW)</option>
+                <option value="24">24V DC (Medium Systems 1.5–3.5kW)</option>
+                <option value="48" selected>48V DC (Whole-Home / AC &gt;3.5kW)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="sol-chem">Battery Chemistry</label>
+              <select id="sol-chem">
+                <option value="0.80,0.95" selected>LiFePO4 Lithium (80% DoD | 95% Eff.)</option>
+                <option value="0.50,0.82">Tubular / AGM Lead-Acid (50% DoD | 82% Eff.)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="sol-autonomy">Backup Autonomy (Days)</label>
+              <input type="number" id="sol-autonomy" min="0.5" max="7" step="0.5" value="1" />
+            </div>
+          </div>
+
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="sol-derate">Environmental Derating Factor</label>
+              <input type="number" id="sol-derate" min="0.55" max="0.95" step="0.01" value="0.77" />
+            </div>
+            <div class="form-group">
+              <label for="sol-inv-eff">Inverter Efficiency (%)</label>
+              <input type="number" id="sol-inv-eff" min="80" max="98" step="1" value="92" />
+            </div>
+          </div>
+
+          <h3 style="font-size: 1.05rem; margin-bottom: 0.75rem; border-top: 1px solid var(--border-color); padding-top: 1rem;">10-Year Financial ROI Inputs</h3>
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="roi-tariff">Grid Electricity Rate ($/kWh)</label>
+              <input type="number" id="roi-tariff" min="0.02" max="1.50" step="0.01" value="0.18" />
+            </div>
+            <div class="form-group">
+              <label for="roi-capex">Est. System Cost ($ USD)</label>
+              <input type="number" id="roi-capex" min="100" max="250000" step="100" value="4800" />
+            </div>
+            <div class="form-group">
+              <label for="roi-inflation">Annual Tariff Inflation (%)</label>
+              <input type="number" id="roi-inflation" min="0" max="20" step="0.5" value="5" />
+            </div>
+          </div>
+        </div>
+
+        <!-- RIGHT COLUMN: ENGINEERING OUTPUTS & CHARTS -->
+        <div>
+          <div id="sol-status" class="status-banner status-ok">System Balanced — 48V Architecture Optimal</div>
+
+          <div class="metrics-grid">
+            <div class="metric-box">
+              <div class="metric-label">Required Solar Array</div>
+              <div class="metric-value" id="res-solar-kw">0.00 kW</div>
+              <div class="metric-sub" id="res-panel-count">0 × 550W Monocrystalline Panels</div>
+            </div>
+            <div class="metric-box">
+              <div class="metric-label">Battery Bank Capacity</div>
+              <div class="metric-value" id="res-batt-kwh">0.00 kWh</div>
+              <div class="metric-sub" id="res-batt-ah">0 Ah @ 48V Nominal</div>
+            </div>
+            <div class="metric-box">
+              <div class="metric-label">Min. Pure Sine Inverter</div>
+              <div class="metric-value" id="res-inv-kw">0.0 kVA</div>
+              <div class="metric-sub" id="res-peak-watts">Connected Peak Load: 0 W</div>
+            </div>
+            <div class="metric-box">
+              <div class="metric-label">MPPT Charge Controller</div>
+              <div class="metric-value" id="res-mppt-amps">0 A</div>
+              <div class="metric-sub" id="res-daily-kwh">Daily Load: 0.00 kWh/day</div>
+            </div>
+            <div class="metric-box">
+              <div class="metric-label">Estimated Payback Period</div>
+              <div class="metric-value" id="res-payback">0.0 Yrs</div>
+              <div class="metric-sub" id="res-yr1-save">Year 1 Savings: $0</div>
+            </div>
+            <div class="metric-box">
+              <div class="metric-label">10-Year Net Profit</div>
+              <div class="metric-value" id="res-10yr-net">$0</div>
+              <div class="metric-sub">Cumulative utility bill avoided minus CapEx</div>
+            </div>
+          </div>
+
+          <div class="chart-container" style="height: 220px;">
+            <canvas id="solarRoiChart"></canvas>
+          </div>
+
+          <div class="chart-container" style="height: 210px;">
+            <canvas id="loadShareChart"></canvas>
+          </div>
+
+          <div class="action-bar">
+            <button type="button" class="btn btn-primary btn-sm" id="copy-solar-btn">Copy BOM Summary</button>
+            <button type="button" class="btn btn-outline btn-sm" id="csv-solar-btn">Download Engineering CSV</button>
+            <button type="button" class="btn btn-outline btn-sm" onclick="Calcvora.printReport()">Print Spec Sheet</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="ad-slot ad-rectangle" data-ad-format="auto"></div>
+
+    <!-- LONG-FORM ENGINEERING GUIDE FOR ADSENSE & SEO -->
+    <article class="guide-article">
+      <h2>Solar & Battery Bank Engineering Methodology</h2>
+      <p>Undersizing an off-grid or hybrid solar power system results in chronic battery sulfation, inverter overload trips during compressor startup, and unexpected grid dependency during cloudy weather. Conversely, oversizing needlessly inflates upfront capital expenditure (CapEx). <strong>Calcvora</strong> applies IEEE and NEC-aligned photovoltaic sizing equations to balance generation, storage, and surge capacity.</p>
+
+      <h3>1. Daily Energy Audit (Watt-Hours)</h3>
+      <p>Every appliance's continuous power draw (Watts) is multiplied by its quantity and actual compressor/active duty hours per day:</p>
+      <div class="formula-box">
+        Daily Energy Demand (Wh/day) = Σ (Appliance_Watts × Quantity × Run_Hours)
+      </div>
+
+      <h3>2. Pure Sine Wave Inverter & Surge Sizing</h3>
+      <p>Inductive motor loads—such as air conditioner compressors, refrigerators, and water pumps—draw 2.5× to 4× their rated running wattage for 1–3 seconds upon startup. Furthermore, inverters are rated in apparent power (VA) at a typical 0.80 power factor:</p>
+      <div class="formula-box">
+        Minimum Inverter Rating (VA) = (Total_Connected_Watts × 1.25 Safety Margin) ÷ 0.80 Power Factor
+      </div>
+
+      <h3>3. Battery Bank Storage & Depth of Discharge (DoD)</h3>
+      <p>Battery nameplate capacity is never 100% usable. Discharging a Lead-Acid battery beyond 50% drastically shortens cycle life, whereas Lithium Iron Phosphate (<code>LiFePO4</code>) cells comfortably sustain 80% Depth of Discharge over 4,000–6,000 cycles. We also account for DC-to-AC inverter conversion losses:</p>
+      <div class="formula-box">
+        Required Battery Bank (Wh) = (Daily_Energy_Wh × Days_of_Autonomy) ÷ (Max_DoD × Inverter_Efficiency)<br/>
+        Nominal Amp-Hours (Ah) = Required_Battery_Wh ÷ System_DC_Voltage
+      </div>
+
+      <h3>4. Solar PV Array & MPPT Charge Controller Sizing</h3>
+      <p>Standard Test Conditions (STC) rate solar panels at 25°C cell temperature and 1,000 W/m² irradiance. Under real rooftop conditions, thermal heat buildup, dust soiling, wiring resistance, and battery charging round-trip losses reduce net yield by ~23% (a <code>0.77</code> derating factor):</p>
+      <div class="formula-box">
+        Required Solar Array (W) = Daily_Energy_Wh ÷ (Peak_Sun_Hours × Derating_Factor × Battery_Efficiency)<br/>
+        Minimum MPPT Controller Current (A) = (Required_Solar_Watts ÷ System_DC_Voltage) × 1.25
+      </div>
+
+      <h2>Worked Numerical Example: 1-Bedroom Home with Inverter AC</h2>
+      <p>Consider a household running a <strong>1.5-Ton Inverter AC (1,400W × 5 hrs = 7,000 Wh)</strong>, an <strong>Inverter Refrigerator (150W × 12 hrs = 1,800 Wh)</strong>, <strong>3 Ceiling Fans (225W × 10 hrs = 2,250 Wh)</strong>, and <strong>LED Lights + Router (100W × 8 hrs = 800 Wh)</strong>:</p>
+      <ol>
+        <li><strong>Total Daily Load:</strong> 7,000 + 1,800 + 2,250 + 800 = <strong>11,850 Wh (11.85 kWh/day)</strong>.</li>
+        <li><strong>Battery Bank (48V LiFePO4, 1 Day Autonomy):</strong> 11,850 ÷ (0.80 × 0.92) = <strong>16,100 Wh (16.1 kWh)</strong>, or <strong>335 Ah at 48V</strong>.</li>
+        <li><strong>Solar Array (5.0 Peak Sun Hours):</strong> 11,850 ÷ (5.0 × 0.77 × 0.95) = <strong>3,240 W</strong>, satisfied by <strong>six 550W monocrystalline panels (3,300W)</strong>.</li>
+        <li><strong>MPPT Controller:</strong> (3,300W ÷ 48V) × 1.25 = <strong>85.9A</strong> (select a 90A or 100A 48V MPPT charge controller).</li>
+      </ol>
+
+      <h2>System Optimization Tips</h2>
+      <ul>
+        <li><strong>Upgrade to 48V Above 3 kW:</strong> Moving from 24V to 48V halves DC bus current, reducing expensive copper battery cable gauge requirements and minimizing I²R resistive losses.</li>
+        <li><strong>Shift Heavy Loads to Solar Noon:</strong> Running water pumps, washing machines, and daytime AC between 10:00 AM and 3:00 PM feeds power directly from solar panels to loads, bypassing battery charge/discharge wear.</li>
+        <li><strong>Use Series-Parallel String Matching:</strong> Ensure your solar panel string open-circuit voltage (Voc) stays at least 15% below your MPPT controller's maximum input voltage rating on the coldest winter morning.</li>
+      </ul>
+
+      <h2>Frequently Asked Questions</h2>
+      <div class="faq-item">
+        <h3>How many solar panels and batteries do I need to run a 1.5 ton inverter AC?</h3>
+        <p>A 1.5-ton inverter air conditioner averages roughly 1,200W to 1,500W once the room reaches target temperature. Running it for 8 hours daily consumes ~11.2 kWh. With 5 Peak Sun Hours and 0.77 system derating, you need roughly 3,000W to 3,200W of solar panels (six 550W panels) and a 15 kWh (48V 300Ah) LiFePO4 battery bank for overnight backup.</p>
+      </div>
+      <div class="faq-item">
+        <h3>Why is LiFePO4 battery capacity sized smaller than Lead-Acid for the same backup?</h3>
+        <p>Lithium Iron Phosphate (LiFePO4) batteries safely support an 80% to 90% Depth of Discharge (DoD) and ~95% round-trip efficiency. Tubular or AGM Lead-Acid batteries degrade rapidly if discharged below 50% DoD and lose ~18% of energy as heat during charging, requiring nearly 1.8x more nameplate Amp-hours for identical usable energy.</p>
+      </div>
+      <div class="faq-item">
+        <h3>Should I choose a 12V, 24V, or 48V battery bank?</h3>
+        <p>Use 12V for small loads under 1,500W (vans, cabins), 24V for medium loads up to 3,500W, and 48V for whole-home or air-conditioning loads above 3,500W. Higher DC voltage cuts current (Amps) by up to 4x, reducing copper cable thickness, resistive heat losses, and MPPT controller costs.</p>
+      </div>
+      <div class="faq-item">
+        <h3>What is the solar derating factor (0.77) in sizing equations?</h3>
+        <p>A 550W solar panel rarely outputs 550W in real-world conditions due to high cell temperature losses (~10%), dust and soiling (~5%), DC/AC wiring voltage drop (~3%), and module mismatch. Multiplying Peak Sun Hours by a 0.77 derating factor ensures your array meets daily energy demand year-round.</p>
+      </div>
+      <div class="faq-item">
+        <h3>How is MPPT solar charge controller amperage calculated?</h3>
+        <p>Divide the total solar array wattage by the nominal battery bank voltage, then multiply by a 1.25 NEC safety factor to account for cold-weather cloud-edge irradiance spikes. For example, a 3,300W array on a 48V bank requires (3300 / 48) × 1.25 = 85.9A, meaning a 90A or 100A MPPT controller is required.</p>
+      </div>
+    </article>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-bottom">
+      <span>© 2026 Calcvora by Md Jobair. Part of the <a href="https://utilitynest123.github.io/">UtilityNest Network</a>.</span>
+      <span><a href="../about/">About</a> • <a href="../privacy-policy/">Privacy Policy</a> • <a href="../disclaimer/">Disclaimer</a> • <a href="../contact/">Contact</a></span>
+    </div>
+  </footer>
+</body>
+</html>
