@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Global Freelance Net-Income, Fee & PPP Rate Calculator — Calcvora</title>
+  <meta name="description" content="Calculate exact freelance take-home pay or reverse-solve client quotes after Upwork, Fiverr, Wise, Payoneer, PayPal fees, FX spreads, tax reserves, and World Bank PPP rates." />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://utilitynest123.github.io/calcvora/freelance-net-income/" />
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='%232563eb'/><text x='50%25' y='54%25' dominant-baseline='middle' text-anchor='middle' font-family='system-ui,sans-serif' font-weight='800' font-size='38' fill='white'>C</text></svg>" />
+  <link rel="stylesheet" href="../assets/style.css" />
+</head>
+<body>
+  <header>
+    <div class="nav-wrap">
+      <a href="../" class="brand"><span class="brand-badge">C</span><span>Calcvora</span></a>
+      <button class="menu-btn" onclick="document.getElementById('nav').classList.toggle('open')">&#9776; Menu</button>
+      <nav class="nav-links" id="nav">
+        <a href="../">Home</a>
+        <a href="../ai-vram-calculator/">AI VRAM &amp; API</a>
+        <a href="../solar-battery-sizing/">Solar &amp; Battery</a>
+        <a href="./" class="active">Freelance &amp; PPP</a>
+        <a href="../about/">About</a>
+        <a href="https://utilitynest123.github.io/">UtilityNest Hub &nearr;</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="breadcrumb"><a href="../">Home</a> / Freelance Net-Income &amp; PPP Calculator</div>
+    <div class="sim-header">
+      <h1>Global Freelance Net-Income, Fee &amp; PPP Rate Calculator</h1>
+      <p>Calculate exact net take-home pay or reverse-solve client quotes after marketplace commissions, payment gateway FX spreads, tax reserves, and Purchasing Power Parity (PPP) equivalence.</p>
+    </div>
+
+    <div class="sim-grid">
+      <!-- Inputs -->
+      <section class="panel">
+        <h2>1. Invoice &amp; Fee Waterfall Inputs</h2>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="calcMode">Calculation Direction</label>
+            <select id="calcMode" onchange="calcFreelance()">
+              <option value="forward" selected>Forward: Gross Quote &rarr; Net Take-Home</option>
+              <option value="reverse">Reverse: Target Net &rarr; Client Quote</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="amountUsd" id="amountLabel">Gross Client Quote ($ USD)</label>
+            <input type="number" id="amountUsd" value="2500" min="10" step="50" oninput="calcFreelance()" />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="platformFee">Marketplace / Platform Fee</label>
+            <select id="platformFee" onchange="calcFreelance()">
+              <option value="0">Direct Client Contract (0%)</option>
+              <option value="0.05">Upwork Enterprise / Direct (5%)</option>
+              <option value="0.10" selected>Upwork Freelancer Fee (10%)</option>
+              <option value="0.20">Fiverr Standard Commission (20%)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="gateway">Payment Gateway &amp; FX Spread</label>
+            <select id="gateway" onchange="calcFreelance()">
+              <option value="0.0085" selected>Wise Business / Multi-Currency (~0.85%)</option>
+              <option value="0.025">Payoneer Withdrawal + FX (~2.5%)</option>
+              <option value="0.044">PayPal Cross-Border + FX (~4.4%)</option>
+              <option value="0.015">SWIFT Wire Transfer (~1.5%)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="fxRate">Mid-Market FX Rate (1 USD &rarr; Local)</label>
+            <input type="number" id="fxRate" value="119.50" min="0.1" step="0.1" oninput="calcFreelance()" />
+          </div>
+          <div class="form-group">
+            <label for="currencyCode">Local Currency Symbol</label>
+            <select id="currencyCode" onchange="calcFreelance()">
+              <option value="৳|BDT" selected>BDT — Bangladeshi Taka (৳)</option>
+              <option value="₹|INR">INR — Indian Rupee (₹)</option>
+              <option value="Rs|PKR">PKR — Pakistani Rupee (Rs)</option>
+              <option value="₱|PHP">PHP — Philippine Peso (₱)</option>
+              <option value="€|EUR">EUR — Euro (€)</option>
+              <option value="£|GBP">GBP — British Pound (£)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="taxPct">Tax &amp; Emergency Savings Reserve (%)</label>
+          <input type="number" id="taxPct" value="10" min="0" max="50" step="1" oninput="calcFreelance()" />
+        </div>
+
+        <h2>2. Purchasing Power Parity (PPP) Comparator</h2>
+        <div class="form-group">
+          <label for="pppRatio">Your Residence Country PPP Living-Cost Ratio (vs. US = 1.00)</label>
+          <select id="pppRatio" onchange="calcFreelance()">
+            <option value="0.278" selected>Bangladesh (PPP Ratio ~0.28 &mdash; 3.6x Purchasing Power)</option>
+            <option value="0.285">India (PPP Ratio ~0.29 &mdash; 3.5x Purchasing Power)</option>
+            <option value="0.260">Pakistan (PPP Ratio ~0.26 &mdash; 3.8x Purchasing Power)</option>
+            <option value="0.380">Philippines (PPP Ratio ~0.38 &mdash; 2.6x Purchasing Power)</option>
+            <option value="0.780">European Union Avg (PPP Ratio ~0.78 &mdash; 1.3x)</option>
+            <option value="1.000">United States (Baseline 1.00)</option>
+          </select>
+        </div>
+      </section>
+
+      <!-- Results -->
+      <section class="panel">
+        <h2>Net Take-Home &amp; PPP Breakdown</h2>
+        <div id="feeBanner" class="status-banner warn">&#9888; Moderate Fee Drag (10.8%) &mdash; $269.13 lost to fees &amp; FX</div>
+
+        <div class="kpi-grid">
+          <div class="kpi-box">
+            <div class="kpi-label" id="primaryKpiLabel">Net Take-Home (USD)</div>
+            <div class="kpi-val" id="netUsd">$2,007.78</div>
+            <div class="kpi-sub" id="grossSub">From $2,500.00 gross client invoice</div>
+          </div>
+          <div class="kpi-box">
+            <div class="kpi-label">Local Bank Deposit</div>
+            <div class="kpi-val" id="localDeposit">&#2547;239,930</div>
+            <div class="kpi-sub" id="effFxSub">Effective FX: 118.48 (Mid: 119.50)</div>
+          </div>
+          <div class="kpi-box">
+            <div class="kpi-label">Total Fees &amp; FX Leakage</div>
+            <div class="kpi-val" id="totalFees">$269.13</div>
+            <div class="kpi-sub" id="feeSplit">Platform: $250.00 | Gateway/FX: $19.13</div>
+          </div>
+          <div class="kpi-box">
+            <div class="kpi-label">US-Equivalent PPP Lifestyle</div>
+            <div class="kpi-val" id="pppVal">$7,222</div>
+            <div class="kpi-sub">Equivalent local living-standard value</div>
+          </div>
+        </div>
+
+        <div class="bar-wrap">
+          <div class="kpi-label" style="margin-bottom:6px;">Gross Invoice Allocation</div>
+          <div class="bar-track">
+            <div id="barNet" class="bar-seg" style="background:#10b981;width:80%;"></div>
+            <div id="barPlat" class="bar-seg" style="background:#ef4444;width:10%;"></div>
+            <div id="barTax" class="bar-seg" style="background:#3b82f6;width:10%;"></div>
+          </div>
+          <div class="legend">
+            <span><i class="dot" style="background:#10b981;"></i>Net Spendable Income</span>
+            <span><i class="dot" style="background:#ef4444;"></i>Platform &amp; FX Fees</span>
+            <span><i class="dot" style="background:#3b82f6;"></i>Tax / Savings Reserve</span>
+          </div>
+        </div>
+
+        <div class="action-row">
+          <button class="btn" onclick="copyFreelanceSummary()">Copy Quote Breakdown</button>
+          <button class="btn-secondary" onclick="downloadFreelanceCsv()">Download Invoice CSV</button>
+        </div>
+      </section>
+    </div>
+
+    <article class="doc-section">
+      <h2>Quantitative Guide to Cross-Border Freelance Pricing &amp; Fee Math</h2>
+      <p>Independent consultants, software engineers, and digital agencies working across international borders frequently underestimate compound fee leakage. When a project passes through a freelance marketplace, an international payment processor, and a currency conversion spread, a nominal $2,500 invoice can easily shrink by 13% to 26% before reaching a local bank account.</p>
+
+      <h3>1. Nested Fee Waterfall Equations (Forward Mode)</h3>
+      <p>Unlike simple additive discounts, cross-border payment fees apply sequentially. First, the marketplace deducts its commission from the gross invoice. Second, the payment gateway applies its transfer and foreign exchange spread to the remaining balance. Finally, prudent freelancers set aside a percentage for local income taxes and emergency reserves.</p>
+      <div class="formula-box">Net_Spendable = Gross &times; (1 &minus; Platform_Fee) &times; (1 &minus; Gateway_FX_Spread) &times; (1 &minus; Tax_Reserve)</div>
+
+      <h3>2. Reverse-Quote Solver Formula</h3>
+      <p>When negotiating fixed-price contracts, quoting your desired net income directly results in undercharging. By inverting the waterfall equation, our calculator computes the exact gross invoice required so that your net bank deposit hits your exact financial target after every deduction.</p>
+      <div class="formula-box">Required_Gross_Quote = Target_Net / [(1 &minus; Platform_Fee) &times; (1 &minus; Gateway_FX_Spread) &times; (1 &minus; Tax_Reserve)]</div>
+
+      <h3>3. Purchasing Power Parity (PPP) Normalization</h3>
+      <p>Nominal exchange rates measure international currency trade, not local cost of living. Using World Bank Purchasing Power Parity (PPP) conversion factors, $2,000 in net remote income earned in South or Southeast Asia commands the domestic housing, food, and service purchasing power of roughly $5,200 to $7,200 in the United States.</p>
+    </article>
+  </main>
+
+  <footer>
+    <div class="footer-grid">
+      <div>
+        <a href="../" class="brand"><span class="brand-badge">C</span><span>Calcvora</span></a>
+        <p>Precision engineering, AI hardware, and financial simulators. Part of the UtilityNest network.</p>
+      </div>
+      <div class="footer-col">
+        <h4>Simulators</h4>
+        <ul>
+          <li><a href="../ai-vram-calculator/">AI VRAM &amp; API Cost</a></li>
+          <li><a href="../solar-battery-sizing/">Solar &amp; Battery Sizing</a></li>
+          <li><a href="./">Freelance Net-Income &amp; PPP</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Legal &amp; Hub</h4>
+        <ul>
+          <li><a href="https://utilitynest123.github.io/">UtilityNest Main Hub</a></li>
+          <li><a href="../about/">About</a></li>
+          <li><a href="../privacy-policy/">Privacy Policy</a></li>
+          <li><a href="../disclaimer/">Disclaimer</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>&copy; 2026 Calcvora. Part of the UtilityNest Network.</span>
+      <span>Contact: utilitynest123@gmail.com</span>
+    </div>
+  </footer>
+
+  <script>
+    function calcFreelance() {
+      const mode = document.getElementById('calcMode').value;
+      const inputAmt = parseFloat(document.getElementById('amountUsd').value) || 100;
+      const pFee = parseFloat(document.getElementById('platformFee').value);
+      const gFee = parseFloat(document.getElementById('gateway').value);
+      const fxRate = parseFloat(document.getElementById('fxRate').value) || 1;
+      const [sym] = document.getElementById('currencyCode').value.split('|');
+      const taxPct = (parseFloat(document.getElementById('taxPct').value) || 0) / 100;
+      const pppRatio = parseFloat(document.getElementById('pppRatio').value) || 1;
+
+      const retentionFactor = (1 - pFee) * (1 - gFee) * (1 - taxPct);
+      let grossUsd, netUsd;
+
+      if (mode === 'forward') {
+        document.getElementById('amountLabel').textContent = "Gross Client Quote ($ USD)";
+        document.getElementById('primaryKpiLabel').textContent = "Net Take-Home (USD)";
+        grossUsd = inputAmt;
+        netUsd = grossUsd * retentionFactor;
+      } else {
+        document.getElementById('amountLabel').textContent = "Target Net Take-Home ($ USD)";
+        document.getElementById('primaryKpiLabel').textContent = "Required Client Quote (USD)";
+        netUsd = inputAmt;
+        grossUsd = netUsd / Math.max(retentionFactor, 0.1);
+      }
+
+      const platLoss = grossUsd * pFee;
+      const afterPlat = grossUsd - platLoss;
+      const gwLoss = afterPlat * gFee;
+      const afterGw = afterPlat - gwLoss;
+      const taxSave = afterGw * taxPct;
+      const totalFees = platLoss + gwLoss;
+      const feeDragPct = (totalFees / grossUsd) * 100;
+
+      const localDeposit = netUsd * fxRate;
+      const effFx = fxRate * (1 - gFee);
+      const pppEquiv = netUsd / pppRatio;
+
+      const banner = document.getElementById('feeBanner');
+      banner.className = feeDragPct > 15 ? "status-banner warn" : "status-banner";
+      banner.textContent = `Fee Drag (${feeDragPct.toFixed(1)}%) — $${totalFees.toFixed(2)} lost to platform & FX fees`;
+
+      document.getElementById('netUsd').textContent = mode === 'forward'
+        ? `$${netUsd.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+        : `$${grossUsd.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+      document.getElementById('grossSub').textContent = mode === 'forward'
+        ? `From $${grossUsd.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} gross client invoice`
+        : `To yield $${netUsd.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} net take-home`;
+
+      document.getElementById('localDeposit').textContent = `${sym}${Math.round(localDeposit).toLocaleString()}`;
+      document.getElementById('effFxSub').textContent = `Effective FX: ${effFx.toFixed(2)} (Mid: ${fxRate.toFixed(2)})`;
+      document.getElementById('totalFees').textContent = `$${totalFees.toFixed(2)}`;
+      document.getElementById('feeSplit').textContent = `Platform: $${platLoss.toFixed(2)} | Gateway/FX: $${gwLoss.toFixed(2)}`;
+      document.getElementById('pppVal').textContent = `$${Math.round(pppEquiv).toLocaleString()}`;
+
+      document.getElementById('barNet').style.width = `${(netUsd / grossUsd) * 100}%`;
+      document.getElementById('barPlat').style.width = `${(totalFees / grossUsd) * 100}%`;
+      document.getElementById('barTax').style.width = `${(taxSave / grossUsd) * 100}%`;
+    }
+
+    function copyFreelanceSummary() {
+      const txt = `Calcvora Freelance Breakdown:\n${document.getElementById('primaryKpiLabel').textContent}: ${document.getElementById('netUsd').textContent}\nLocal Deposit: ${document.getElementById('localDeposit').textContent}\nTotal Fees: ${document.getElementById('totalFees').textContent}\nPPP Equivalence: ${document.getElementById('pppVal').textContent}`;
+      navigator.clipboard.writeText(txt);
+      alert("Invoice breakdown copied to clipboard!");
+    }
+
+    function downloadFreelanceCsv() {
+      const csv = `Metric,Value\n${document.getElementById('primaryKpiLabel').textContent},"${document.getElementById('netUsd').textContent}"\nLocal Bank Deposit,"${document.getElementById('localDeposit').textContent}"\nTotal Fees,"${document.getElementById('totalFees').textContent}"\nPPP Equivalent Value,"${document.getElementById('pppVal').textContent}"`;
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+      a.download = 'calcvora-freelance-breakdown.csv';
+      a.click();
+    }
+
+    calcFreelance();
+  </script>
+</body>
+</html>
