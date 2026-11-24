@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Off-Grid & Hybrid Solar + Battery Bank ROI Simulator — Calcvora</title>
+  <meta name="description" content="Calculate exact solar PV array wattage, LiFePO4 or Lead-Acid battery bank capacity (Ah/kWh), MPPT controller amperage, inverter surge rating, and 10-year financial payback." />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://utilitynest123.github.io/calcvora/solar-battery-sizing/" />
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='%232563eb'/><text x='50%25' y='54%25' dominant-baseline='middle' text-anchor='middle' font-family='system-ui,sans-serif' font-weight='800' font-size='38' fill='white'>C</text></svg>" />
+  <link rel="stylesheet" href="../assets/style.css" />
+</head>
+<body>
+  <header>
+    <div class="nav-wrap">
+      <a href="../" class="brand"><span class="brand-badge">C</span><span>Calcvora</span></a>
+      <button class="menu-btn" onclick="document.getElementById('nav').classList.toggle('open')">&#9776; Menu</button>
+      <nav class="nav-links" id="nav">
+        <a href="../">Home</a>
+        <a href="../ai-vram-calculator/">AI VRAM &amp; API</a>
+        <a href="./" class="active">Solar &amp; Battery</a>
+        <a href="../freelance-net-income/">Freelance &amp; PPP</a>
+        <a href="../about/">About</a>
+        <a href="https://utilitynest123.github.io/">UtilityNest Hub &nearr;</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="breadcrumb"><a href="../">Home</a> / Solar &amp; Battery Bank Sizing Simulator</div>
+    <div class="sim-header">
+      <h1>Off-Grid &amp; Hybrid Solar + Battery Bank ROI Simulator</h1>
+      <p>Model daily appliance watt-hour consumption to size solar PV arrays, battery Amp-hours, MPPT charge controller amperage, pure sine inverter capacity, and 10-year electricity payback ROI.</p>
+    </div>
+
+    <div class="sim-grid">
+      <!-- Inputs -->
+      <section class="panel">
+        <h2>1. Load Profile &amp; Engineering Parameters</h2>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="dailyKwh">Total Daily Appliance Load (kWh/day)</label>
+            <input type="number" id="dailyKwh" value="12.15" min="0.5" max="500" step="0.25" oninput="calcSolar()" />
+          </div>
+          <div class="form-group">
+            <label for="peakWatts">Max Simultaneous Peak Load (Watts)</label>
+            <input type="number" id="peakWatts" value="1875" min="100" max="100000" step="50" oninput="calcSolar()" />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="psh">Peak Sun Hours (PSH / day)</label>
+            <input type="number" id="psh" value="5.0" min="1.5" max="9" step="0.1" oninput="calcSolar()" />
+          </div>
+          <div class="form-group">
+            <label for="sysVolt">DC Battery Bank Voltage</label>
+            <select id="sysVolt" onchange="calcSolar()">
+              <option value="12">12V DC (Small Cabin / RV)</option>
+              <option value="24">24V DC (Medium Off-Grid)</option>
+              <option value="48" selected>48V DC (Whole-Home / Hybrid)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="chem">Battery Chemistry (Usable DoD)</label>
+            <select id="chem" onchange="calcSolar()">
+              <option value="0.80" selected>LiFePO4 Lithium (80% DoD)</option>
+              <option value="0.50">AGM / Tubular Lead-Acid (50% DoD)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="autonomy">Backup Autonomy (Days without Sun)</label>
+            <input type="number" id="autonomy" value="1" min="0.5" max="7" step="0.5" oninput="calcSolar()" />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="derate">System Efficiency / Derating Factor</label>
+            <input type="number" id="derate" value="0.77" min="0.5" max="0.95" step="0.01" oninput="calcSolar()" />
+          </div>
+          <div class="form-group">
+            <label for="invEff">Inverter Efficiency (%)</label>
+            <input type="number" id="invEff" value="92" min="75" max="99" step="1" oninput="calcSolar()" />
+          </div>
+        </div>
+
+        <h2>2. 10-Year Financial ROI Inputs</h2>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="gridRate">Grid Electricity Rate ($ / kWh)</label>
+            <input type="number" id="gridRate" value="0.18" min="0.02" max="1.5" step="0.01" oninput="calcSolar()" />
+          </div>
+          <div class="form-group">
+            <label for="capex">Est. Installed System Cost ($ USD)</label>
+            <input type="number" id="capex" value="4600" min="200" max="200000" step="100" oninput="calcSolar()" />
+          </div>
+        </div>
+      </section>
+
+      <!-- Results -->
+      <section class="panel">
+        <h2>System Sizing &amp; 10-Year Payback</h2>
+        <div id="solarBanner" class="status-banner">&#10003; System Balanced — 48V DC Architecture Optimal</div>
+
+        <div class="kpi-grid">
+          <div class="kpi-box">
+            <div class="kpi-label">Required Solar PV Array</div>
+            <div class="kpi-val" id="pvKw">3.32 kW</div>
+            <div class="kpi-sub" id="pvPanels">7 &times; 550W Panels (3.85 kW actual)</div>
+          </div>
+          <div class="kpi-box">
+            <div class="kpi-label">Battery Bank Capacity</div>
+            <div class="kpi-val" id="batKwh">16.51 kWh</div>
+            <div class="kpi-sub" id="batAh">344 Ah @ 48V Nominal</div>
+          </div>
+          <div class="kpi-box">
+            <div class="kpi-label">Min. Pure Sine Inverter</div>
+            <div class="kpi-val" id="invKva">2.9 kVA</div>
+            <div class="kpi-sub" id="invSub">Includes 1.25x continuous + surge headroom</div>
+          </div>
+          <div class="kpi-box">
+            <div class="kpi-label">MPPT Charge Controller</div>
+            <div class="kpi-val" id="mpptAmp">101 A</div>
+            <div class="kpi-sub">Sized with 1.25x NEC safety margin</div>
+          </div>
+          <div class="kpi-box">
+            <div class="kpi-label">Estimated Payback Period</div>
+            <div class="kpi-val" id="paybackYrs">5.7 Yrs</div>
+            <div class="kpi-sub" id="yr1Save">Year 1 Grid Savings: $798</div>
+          </div>
+          <div class="kpi-box">
+            <div class="kpi-label">10-Year Net Profit</div>
+            <div class="kpi-val" id="net10Yr">$4,638</div>
+            <div class="kpi-sub">Cumulative utility bill avoided minus CapEx</div>
+          </div>
+        </div>
+
+        <div class="action-row">
+          <button class="btn" onclick="copySolarSummary()">Copy BOM Summary</button>
+          <button class="btn-secondary" onclick="downloadSolarCsv()">Download Engineering CSV</button>
+        </div>
+      </section>
+    </div>
+
+    <article class="doc-section">
+      <h2>Solar &amp; Energy Storage Engineering Methodology</h2>
+      <p>Designing a dependable off-grid or hybrid solar power system requires accounting for real-world thermal losses, inverter conversion overhead, and battery cycle longevity rather than matching nameplate panel wattage directly to appliance ratings.</p>
+
+      <h3>1. PV Array Sizing &amp; Environmental Derating</h3>
+      <p>Solar panels rarely produce 100% of their Standard Test Conditions (STC) rating due to high roof temperatures, dust accumulation, wiring resistance, and MPPT tracking losses. Dividing daily energy demand by Peak Sun Hours (PSH) and a realistic derating factor (typically 0.75–0.80) ensures full battery recharge even on partially hazy days.</p>
+      <div class="formula-box">Required_PV_kW = Daily_Load_kWh / (Peak_Sun_Hours &times; Derating_Factor)</div>
+
+      <h3>2. Battery Chemistry &amp; Depth-of-Discharge (DoD)</h3>
+      <p>Lithium Iron Phosphate (LiFePO4) batteries safely support an 80% daily Depth-of-Discharge for over 4,000–6,000 cycles, whereas Lead-Acid (AGM or Tubular) batteries suffer rapid sulfation if discharged below 50%. Battery bank capacity must also compensate for DC-to-AC inverter conversion losses.</p>
+      <div class="formula-box">Battery_kWh = (Daily_Load_kWh &times; Autonomy_Days) / (Max_DoD &times; Inverter_Efficiency)</div>
+
+      <h3>3. High-Voltage DC Bus &amp; MPPT Sizing</h3>
+      <p>For systems exceeding 2.5 kW, a 48V DC battery architecture cuts DC current draw in half compared to 24V systems—reducing copper cable heating losses and allowing smaller MPPT charge controllers. MPPT amperage is sized by dividing total installed PV wattage by nominal battery voltage with a 1.25&times; safety multiplier.</p>
+    </article>
+  </main>
+
+  <footer>
+    <div class="footer-grid">
+      <div>
+        <a href="../" class="brand"><span class="brand-badge">C</span><span>Calcvora</span></a>
+        <p>Precision engineering, AI hardware, and financial simulators. Part of the UtilityNest network.</p>
+      </div>
+      <div class="footer-col">
+        <h4>Simulators</h4>
+        <ul>
+          <li><a href="../ai-vram-calculator/">AI VRAM &amp; API Cost</a></li>
+          <li><a href="./">Solar &amp; Battery Sizing</a></li>
+          <li><a href="../freelance-net-income/">Freelance Net-Income &amp; PPP</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Legal &amp; Hub</h4>
+        <ul>
+          <li><a href="https://utilitynest123.github.io/">UtilityNest Main Hub</a></li>
+          <li><a href="../about/">About</a></li>
+          <li><a href="../privacy-policy/">Privacy Policy</a></li>
+          <li><a href="../disclaimer/">Disclaimer</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>&copy; 2026 Calcvora. Part of the UtilityNest Network.</span>
+      <span>Contact: utilitynest123@gmail.com</span>
+    </div>
+  </footer>
+
+  <script>
+    function calcSolar() {
+      const dailyKwh = parseFloat(document.getElementById('dailyKwh').value) || 1;
+      const peakWatts = parseFloat(document.getElementById('peakWatts').value) || 500;
+      const psh = parseFloat(document.getElementById('psh').value) || 5;
+      const sysVolt = parseInt(document.getElementById('sysVolt').value, 10);
+      const dod = parseFloat(document.getElementById('chem').value);
+      const autonomy = parseFloat(document.getElementById('autonomy').value) || 1;
+      const derate = parseFloat(document.getElementById('derate').value) || 0.77;
+      const invEff = (parseFloat(document.getElementById('invEff').value) || 92) / 100;
+      const gridRate = parseFloat(document.getElementById('gridRate').value) || 0.18;
+      const capex = parseFloat(document.getElementById('capex').value) || 4000;
+
+      const reqPvKw = dailyKwh / (psh * derate);
+      const panelsCount = Math.ceil((reqPvKw * 1000) / 550);
+      const actualPvKw = (panelsCount * 550) / 1000;
+
+      const reqBatKwh = (dailyKwh * autonomy) / (dod * invEff);
+      const batAh = (reqBatKwh * 1000) / sysVolt;
+
+      const invKva = (peakWatts * 1.25) / 800;
+      const mpptAmp = Math.ceil(((actualPvKw * 1000) / sysVolt) * 1.25);
+
+      let cumSavings = 0;
+      let payback = "> 10 Yrs";
+      let foundPayback = false;
+      const yr1Save = dailyKwh * 365 * gridRate;
+
+      for (let y = 1; y <= 10; y++) {
+        const annual = yr1Save * Math.pow(1.04, y - 1);
+        if (!foundPayback && cumSavings + annual >= capex) {
+          const frac = (capex - cumSavings) / annual;
+          payback = `${(y - 1 + frac).toFixed(1)} Yrs`;
+          foundPayback = true;
+        }
+        cumSavings += annual;
+      }
+      const net10 = cumSavings - capex;
+
+      document.getElementById('solarBanner').textContent = `✓ System Balanced — ${sysVolt}V DC Architecture Optimal (${panelsCount} Panels + ${mpptAmp}A MPPT)`;
+      document.getElementById('pvKw').textContent = `${reqPvKw.toFixed(2)} kW`;
+      document.getElementById('pvPanels').textContent = `${panelsCount} × 550W Panels (${actualPvKw.toFixed(2)} kW actual)`;
+      document.getElementById('batKwh').textContent = `${reqBatKwh.toFixed(2)} kWh`;
+      document.getElementById('batAh').textContent = `${Math.round(batAh)} Ah @ ${sysVolt}V Nominal`;
+      document.getElementById('invKva').textContent = `${invKva.toFixed(1)} kVA`;
+      document.getElementById('invSub').textContent = `Peak Connected Load: ${peakWatts} W`;
+      document.getElementById('mpptAmp').textContent = `${mpptAmp} A`;
+      document.getElementById('paybackYrs').textContent = payback;
+      document.getElementById('yr1Save').textContent = `Year 1 Savings: $${Math.round(yr1Save).toLocaleString()}`;
+      document.getElementById('net10Yr').textContent = `${net10 >= 0 ? '$' : '-$'}${Math.abs(Math.round(net10)).toLocaleString()}`;
+    }
+
+    function copySolarSummary() {
+      const txt = `Calcvora Solar BOM:\nPV Array: ${document.getElementById('pvKw').textContent} (${document.getElementById('pvPanels').textContent})\nBattery Bank: ${document.getElementById('batKwh').textContent} (${document.getElementById('batAh').textContent})\nInverter: ${document.getElementById('invKva').textContent}\nMPPT: ${document.getElementById('mpptAmp').textContent}\nPayback: ${document.getElementById('paybackYrs').textContent}`;
+      navigator.clipboard.writeText(txt);
+      alert("Solar BOM summary copied to clipboard!");
+    }
+
+    function downloadSolarCsv() {
+      const csv = `Component,Specification\nRequired PV Array,${document.getElementById('pvKw').textContent}\nPanel Configuration,${document.getElementById('pvPanels').textContent}\nBattery Bank,${document.getElementById('batKwh').textContent}\nInverter Rating,${document.getElementById('invKva').textContent}\nMPPT Controller,${document.getElementById('mpptAmp').textContent}\nPayback Period,${document.getElementById('paybackYrs').textContent}\n10-Year Net Profit,${document.getElementById('net10Yr').textContent}`;
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+      a.download = 'calcvora-solar-bom.csv';
+      a.click();
+    }
+
+    calcSolar();
+  </script>
+</body>
+</html>
