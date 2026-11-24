@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Local LLM VRAM, Token Speed & Cloud API Cost Calculator — Calcvora</title>
+  <meta name="description" content="Calculate exact GPU VRAM allocation (Weights + KV Cache + Runtime Overhead), estimate tokens/sec from memory bandwidth, and benchmark monthly cloud API costs." />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://utilitynest123.github.io/calcvora/ai-vram-calculator/" />
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='%232563eb'/><text x='50%25' y='54%25' dominant-baseline='middle' text-anchor='middle' font-family='system-ui,sans-serif' font-weight='800' font-size='38' fill='white'>C</text></svg>" />
+  <link rel="stylesheet" href="../assets/style.css" />
+</head>
+<body>
+  <header>
+    <div class="nav-wrap">
+      <a href="../" class="brand"><span class="brand-badge">C</span><span>Calcvora</span></a>
+      <button class="menu-btn" onclick="document.getElementById('nav').classList.toggle('open')">&#9776; Menu</button>
+      <nav class="nav-links" id="nav">
+        <a href="../">Home</a>
+        <a href="./" class="active">AI VRAM &amp; API</a>
+        <a href="../solar-battery-sizing/">Solar &amp; Battery</a>
+        <a href="../freelance-net-income/">Freelance &amp; PPP</a>
+        <a href="../about/">About</a>
+        <a href="https://utilitynest123.github.io/">UtilityNest Hub &nearr;</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="breadcrumb"><a href="../">Home</a> / AI VRAM &amp; API Cost Calculator</div>
+    <div class="sim-header">
+      <h1>Local LLM VRAM, Token Speed &amp; Cloud API Cost Calculator</h1>
+      <p>Simulate exact GPU VRAM allocation (Model Weights + KV Cache + CUDA Runtime Overhead), estimate generation speed (tokens/sec) from memory bandwidth, and compare monthly cloud API spend.</p>
+    </div>
+
+    <div class="sim-grid">
+      <!-- Inputs -->
+      <section class="panel">
+        <h2>1. Model &amp; Hardware Parameters</h2>
+        <div class="preset-bar">
+          <button class="preset-chip" onclick="setPreset(8, 8, 0.62, 8192)">Llama-3.1 8B</button>
+          <button class="preset-chip" onclick="setPreset(14, 14, 0.62, 8192)">Qwen-2.5 14B</button>
+          <button class="preset-chip" onclick="setPreset(32, 32, 0.62, 16384)">DeepSeek-R1 32B</button>
+          <button class="preset-chip" onclick="setPreset(70, 70, 0.62, 8192)">Llama-3.3 70B</button>
+          <button class="preset-chip" onclick="setPreset(671, 37, 0.55, 16384)">DeepSeek-V3 (671B MoE)</button>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="params">Total Parameters (Billions)</label>
+            <input type="number" id="params" value="8" min="0.5" max="1000" step="0.5" oninput="calcAI()" />
+          </div>
+          <div class="form-group">
+            <label for="activeParams">Active Params / Token (MoE)</label>
+            <input type="number" id="activeParams" value="8" min="0.5" max="1000" step="0.5" oninput="calcAI()" />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="quant">Weight Quantization</label>
+            <select id="quant" onchange="calcAI()">
+              <option value="2.0">FP16 / BF16 (2.00 B/param)</option>
+              <option value="1.05">Q8_0 (1.05 B/param)</option>
+              <option value="0.75">Q6_K (0.75 B/param)</option>
+              <option value="0.62" selected>Q4_K_M (0.62 B/param — Recommended)</option>
+              <option value="0.50">IQ4_XS (0.50 B/param)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="kvPrec">KV Cache Precision</label>
+            <select id="kvPrec" onchange="calcAI()">
+              <option value="1.0" selected>FP16 (Default — Full Precision)</option>
+              <option value="0.5">Q8_0 Quantized KV Cache</option>
+              <option value="0.25">Q4_0 Quantized KV Cache</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="ctx">Context Window (Tokens)</label>
+            <select id="ctx" onchange="calcAI()">
+              <option value="4096">4,096 tokens (4K)</option>
+              <option value="8192" selected>8,192 tokens (8K)</option>
+              <option value="16384">16,384 tokens (16K)</option>
+              <option value="32768">32,768 tokens (32K)</option>
+              <option value="65536">65,536 tokens (64K)</option>
+              <option value="131072">131,072 tokens (128K)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="gpu">Target GPU / Unified Memory</label>
+            <select id="gpu" onchange="calcAI()">
+              <option value="8|272">NVIDIA RTX 4060 (8 GB | 272 GB/s)</option>
+              <option value="12|504">NVIDIA RTX 4070 / 3060 (12 GB | 504 GB/s)</option>
+              <option value="16|736">NVIDIA RTX 4080 Super (16 GB | 736 GB/s)</option>
+              <option value="24|936" selected>NVIDIA RTX 3090 / 4090 (24 GB | 936 GB/s)</option>
+              <option value="32|1792">NVIDIA RTX 5090 (32 GB | 1,792 GB/s)</option>
+              <option value="48|864">NVIDIA RTX A6000 / 2x3090 (48 GB | 864 GB/s)</option>
+              <option value="64|400">Apple M3 Max Unified (64 GB | 400 GB/s)</option>
+              <option value="128|546">Apple M4 Max Unified (128 GB | 546 GB/s)</option>
+            </select>
+          </div>
+        </div>
+
+        <h2>2. Monthly Cloud API Benchmark</h2>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="monthlyTokens">Monthly Token Volume (Millions)</label>
+            <input type="number" id="monthlyTokens" value="15" min="0" step="1" oninput="calcAI()" />
+          </div>
+          <div class="form-group">
+            <label for="apiRate">Blended Cloud API Rate ($ / 1M Tokens)</label>
+            <input type="number" id="apiRate" value="2.50" min="0.1" step="0.1" oninput="calcAI()" />
+          </div>
+        </div>
+      </section>
+
+      <!-- Results -->
+      <section class="panel">
+        <h2>Simulation Output &amp; Memory Breakdown</h2>
+        <div id="vramStatus" class="status-banner">Fits Comfortably in VRAM</div>
+
+        <div class="kpi-grid">
+          <div class="kpi-box">
+            <div class="kpi-label">Total VRAM Required</div>
+            <div class="kpi-val" id="totalVram">10.58 GB</div>
+            <div class="kpi-sub" id="vramPct">44.1% of 24 GB GPU memory</div>
+          </div>
+          <div class="kpi-box">
+            <div class="kpi-label">Est. Generation Speed</div>
+            <div class="kpi-val" id="tokSpeed">72.0 tok/s</div>
+            <div class="kpi-sub" id="speedNote">100% VRAM resident (optimal)</div>
+          </div>
+          <div class="kpi-box">
+            <div class="kpi-label">Model Weights Footprint</div>
+            <div class="kpi-val" id="weightsGb">4.96 GB</div>
+            <div class="kpi-sub">Static quantized parameter tensors</div>
+          </div>
+          <div class="kpi-box">
+            <div class="kpi-label">KV Cache + Runtime</div>
+            <div class="kpi-val" id="kvRuntimeGb">5.62 GB</div>
+            <div class="kpi-sub" id="kvDetail">KV: 4.29 GB | Runtime: 1.33 GB</div>
+          </div>
+        </div>
+
+        <div class="bar-wrap">
+          <div class="kpi-label" style="margin-bottom:6px;">VRAM Allocation Distribution</div>
+          <div class="bar-track">
+            <div id="barWeights" class="bar-seg" style="background:#3b82f6;width:45%;"></div>
+            <div id="barKv" class="bar-seg" style="background:#f59e0b;width:35%;"></div>
+            <div id="barSys" class="bar-seg" style="background:#8b5cf6;width:20%;"></div>
+          </div>
+          <div class="legend">
+            <span><i class="dot" style="background:#3b82f6;"></i>Model Weights</span>
+            <span><i class="dot" style="background:#f59e0b;"></i>KV Cache</span>
+            <span><i class="dot" style="background:#8b5cf6;"></i>CUDA/Metal Overhead</span>
+          </div>
+        </div>
+
+        <div class="kpi-box" style="margin-top:1rem;">
+          <div class="kpi-label">Equivalent Cloud API Spend</div>
+          <div class="kpi-val" id="cloudCost">$37.50 / month</div>
+          <div class="kpi-sub" id="cloudNote">Based on 15M tokens/month vs. $0 marginal local token fee</div>
+        </div>
+
+        <div class="action-row">
+          <button class="btn" onclick="copyAISummary()">Copy Spec Summary</button>
+          <button class="btn-secondary" onclick="downloadAICsv()">Download CSV</button>
+        </div>
+      </section>
+    </div>
+
+    <article class="doc-section">
+      <h2>Engineering Methodology: How Local LLM VRAM &amp; Token Speed Are Calculated</h2>
+      <p>Deploying Large Language Models (LLMs) locally requires balancing three competing memory consumers inside GPU Video RAM (VRAM) or Apple Silicon Unified Memory: static model weights, the dynamic Key-Value (KV) attention cache, and framework runtime buffers. Relying on naive rules such as "1 billion parameters equals 1 GB" frequently leads to out-of-memory (OOM) crashes once long context windows are enabled.</p>
+
+      <h3>1. Static Model Weights Footprint</h3>
+      <p>Model weights represent the frozen neural network parameters stored on disk (typically in GGUF, EXL2, or SafeTensors format) and loaded directly into GPU memory. While unquantized FP16/BF16 weights require 2.0 bytes per parameter, modern 4-bit block quantization methods such as <code>Q4_K_M</code> compress weights to approximately 0.62 bytes per parameter while preserving over 98% of baseline reasoning accuracy.</p>
+      <div class="formula-box">Weights_VRAM (GB) = Total_Parameters (B) &times; Bytes_Per_Parameter</div>
+
+      <h3>2. Dynamic KV Cache &amp; Context Scaling</h3>
+      <p>During autoregressive inference, transformer models cache Key and Value projection vectors for every token in the active context window to avoid recomputing past attention states. As context length scales from 8K to 128K tokens, KV cache memory expands linearly and can exceed the size of the model weights themselves. Enabling FP8 or Q8_0 KV cache quantization cuts this memory overhead in half.</p>
+      <div class="formula-box">KV_Cache (GB) &approx; 0.00052 &times; Context_Tokens &times; (Parameters / 8)^0.65 &times; KV_Precision_Factor</div>
+
+      <h3>3. Memory-Bandwidth Bound Token Generation Speed</h3>
+      <p>Single-batch LLM text generation is strictly memory-bandwidth bound rather than compute-bound. For every generated token, the GPU must read all active model weights from VRAM into compute cores. In Mixture-of-Experts (MoE) architectures like DeepSeek-V3, all 671B parameters must reside in memory, but only 37B active parameters are read per token—enabling high token throughput relative to total model size.</p>
+      <div class="formula-box">Est_Tokens_Per_Sec &approx; (GPU_Memory_Bandwidth_GBs / Active_Weights_GB) &times; 0.72_Efficiency_Factor</div>
+    </article>
+  </main>
+
+  <footer>
+    <div class="footer-grid">
+      <div>
+        <a href="../" class="brand"><span class="brand-badge">C</span><span>Calcvora</span></a>
+        <p>Precision engineering, AI hardware, and financial simulators. Part of the UtilityNest network.</p>
+      </div>
+      <div class="footer-col">
+        <h4>Simulators</h4>
+        <ul>
+          <li><a href="./">AI VRAM &amp; API Cost</a></li>
+          <li><a href="../solar-battery-sizing/">Solar &amp; Battery Sizing</a></li>
+          <li><a href="../freelance-net-income/">Freelance Net-Income &amp; PPP</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Legal &amp; Hub</h4>
+        <ul>
+          <li><a href="https://utilitynest123.github.io/">UtilityNest Main Hub</a></li>
+          <li><a href="../about/">About</a></li>
+          <li><a href="../privacy-policy/">Privacy Policy</a></li>
+          <li><a href="../disclaimer/">Disclaimer</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>&copy; 2026 Calcvora. Part of the UtilityNest Network.</span>
+      <span>Contact: utilitynest123@gmail.com</span>
+    </div>
+  </footer>
+
+  <script>
+    function setPreset(p, ap, q, c) {
+      document.getElementById('params').value = p;
+      document.getElementById('activeParams').value = ap;
+      document.getElementById('quant').value = q;
+      document.getElementById('ctx').value = c;
+      calcAI();
+    }
+
+    function calcAI() {
+      const params = parseFloat(document.getElementById('params').value) || 8;
+      const activeParams = Math.min(params, parseFloat(document.getElementById('activeParams').value) || params);
+      const quant = parseFloat(document.getElementById('quant').value);
+      const kvPrec = parseFloat(document.getElementById('kvPrec').value);
+      const ctx = parseInt(document.getElementById('ctx').value, 10);
+      const [gpuMem, gpuBw] = document.getElementById('gpu').value.split('|').map(Number);
+      const mTokens = parseFloat(document.getElementById('monthlyTokens').value) || 0;
+      const apiRate = parseFloat(document.getElementById('apiRate').value) || 0;
+
+      const weightsGb = params * quant;
+      const activeWeightsGb = activeParams * quant;
+      const kvGb = (ctx / 8192) * 4.29 * Math.pow(params / 8, 0.62) * kvPrec;
+      const runtimeGb = 0.85 + (weightsGb * 0.095);
+      const totalVram = weightsGb + kvGb + runtimeGb;
+
+      const pct = (totalVram / gpuMem) * 100;
+      const headroom = gpuMem - totalVram;
+
+      let speed = (gpuBw / Math.max(activeWeightsGb, 0.5)) * 0.72;
+      let speedNote = "100% VRAM resident (optimal)";
+      const statusEl = document.getElementById('vramStatus');
+
+      if (headroom >= 1.5) {
+        statusEl.className = "status-banner";
+        statusEl.textContent = `✓ Fits Comfortably in VRAM (${headroom.toFixed(2)} GB headroom)`;
+      } else if (headroom >= 0) {
+        statusEl.className = "status-banner warn";
+        statusEl.textContent = `⚠ Tight VRAM Fit (${headroom.toFixed(2)} GB headroom — reduce context if OOM)`;
+      } else {
+        speed = speed * 0.16;
+        speedNote = "CPU/RAM offload penalty active (-84% speed)";
+        statusEl.className = "status-banner warn";
+        statusEl.textContent = `⚠ Exceeds VRAM by ${Math.abs(headroom).toFixed(2)} GB — Requires CPU/RAM Offloading`;
+      }
+
+      document.getElementById('totalVram').textContent = `${totalVram.toFixed(2)} GB`;
+      document.getElementById('vramPct').textContent = `${pct.toFixed(1)}% of ${gpuMem} GB GPU memory`;
+      document.getElementById('tokSpeed').textContent = `${speed.toFixed(1)} tok/s`;
+      document.getElementById('speedNote').textContent = speedNote;
+      document.getElementById('weightsGb').textContent = `${weightsGb.toFixed(2)} GB`;
+      document.getElementById('kvRuntimeGb').textContent = `${(kvGb + runtimeGb).toFixed(2)} GB`;
+      document.getElementById('kvDetail').textContent = `KV: ${kvGb.toFixed(2)} GB | Runtime: ${runtimeGb.toFixed(2)} GB`;
+
+      document.getElementById('barWeights').style.width = `${(weightsGb / totalVram) * 100}%`;
+      document.getElementById('barKv').style.width = `${(kvGb / totalVram) * 100}%`;
+      document.getElementById('barSys').style.width = `${(runtimeGb / totalVram) * 100}%`;
+
+      const cloudCost = mTokens * apiRate;
+      document.getElementById('cloudCost').textContent = `$${cloudCost.toFixed(2)} / month`;
+      document.getElementById('cloudNote').textContent = `Based on ${mTokens}M tokens/month vs. $0 marginal local token fee`;
+    }
+
+    function copyAISummary() {
+      const txt = `Calcvora AI VRAM Report:\nTotal VRAM: ${document.getElementById('totalVram').textContent}\nEst. Speed: ${document.getElementById('tokSpeed').textContent}\nWeights: ${document.getElementById('weightsGb').textContent}\nKV+Runtime: ${document.getElementById('kvRuntimeGb').textContent}\nCloud API Equivalent: ${document.getElementById('cloudCost').textContent}`;
+      navigator.clipboard.writeText(txt);
+      alert("Simulation summary copied to clipboard!");
+    }
+
+    function downloadAICsv() {
+      const csv = `Metric,Value\nTotal VRAM,${document.getElementById('totalVram').textContent}\nEst Speed,${document.getElementById('tokSpeed').textContent}\nModel Weights,${document.getElementById('weightsGb').textContent}\nKV + Runtime,${document.getElementById('kvRuntimeGb').textContent}\nCloud API Monthly Cost,${document.getElementById('cloudCost').textContent}`;
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+      a.download = 'calcvora-ai-vram-report.csv';
+      a.click();
+    }
+
+    calcAI();
+  </script>
+</body>
+</html>
